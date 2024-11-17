@@ -12,8 +12,8 @@ def encrypt_with_public_key(message, public_key):
 
 # Client logic to continuously send messages to the server through Tor
 def client_program():
-    host = 'server_public_ip_or_domain'  # The server's IP address or domain
-    port = 12345  # The port the server is listening on
+    host = '24.80.189.0'  # The server's IP address or domain
+    port = 25000  # The port the server is listening on
 
     # Set up the Tor SOCKS5 proxy
     socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)  # Default Tor SOCKS5 Proxy settings
