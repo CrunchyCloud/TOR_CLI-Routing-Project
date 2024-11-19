@@ -42,7 +42,6 @@ def client_program():
     public_key = client_socket.recv(2048)
 
     # Log current Tor circuit info
-    get_tor_circuit_info()
 
     while True: 
         # Prompt the user to enter a message
@@ -56,6 +55,8 @@ def client_program():
 
         # Send the encrypted message to the server
         client_socket.send(encrypted_message)
+
+        get_tor_circuit_info()
 
     client_socket.close()
 
