@@ -12,28 +12,26 @@ def encrypt_with_public_key(message, public_key):
     encrypted_message = cipher.encrypt(message.encode())
     return encrypted_message
 
-# Function to get the Tor circuit info
-def get_tor_circuit_info():
-    try:
-        with Controller.from_port(port=9051) as controller:
-            controller.authenticate()
-
-            # Request circuit information
-            circuits = controller.get_circuits()
-            for circuit in circuits:
-                print(f"Circuit {circuit.id}:")
-                # Loop through the paths if available
-                if hasattr(circuit, 'path'):
-                    for node in circuit.path:
-                        print(f"  - {node}")
-                print("------")
-    except Exception as e:
-        print(f"Error retrieving Tor circuit info: {e}")
-
 # Client logic to continuously send messages to the server through Tor
 def client_program():
-    host = '24.80.189.0'  # The server's IP address or domain
+
+    try:
+        with Controller.from_port(port=9051) as controller:  # Default Tor control port
+            controller.authenticate()  # Make sure we authenticate
+            circuits = controller.get_circuits()  # Retrieve the list of circuits
+    
+            # Output circuit information
+            for circuit in circuits:
+                print(f"Circuit ID: {circuit.id}")
+                print(f"Status: {circuit.status}")
+                for path in circuit.path:
+                    print(f"  {path}")
+                print("-" * 40)
+    except Exception as e:
+        print(f"Error fetching Tor circuit info: {e}")
+
     port = 25000  # The port the server is listening on
+    host = '24.80.189.0'  # The server's IP address or domain
 
     # Set up the Tor SOCKS5 proxy
     socks.set_default_proxy(socks.SOCKS5, "127.0.0.1", 9050)  # Default Tor SOCKS5 Proxy settings
@@ -48,8 +46,7 @@ def client_program():
         public_key = client_socket.recv(2048)
         print("Received public key from server.")
 
-        # Log current Tor circuit info
-        get_tor_circuit_info()  # Fetch Tor circuit info once after connection
+
 
         while True: 
             # Prompt the user to enter a message
