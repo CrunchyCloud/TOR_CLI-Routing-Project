@@ -14,16 +14,21 @@ def encrypt_with_public_key(message, public_key):
 
 # Function to get the Tor circuit info
 def get_tor_circuit_info():
-    with Controller.from_port(port=9051) as controller:
-        controller.authenticate()
-        
-        # Request circuit information
-        circuits = controller.get_circuits()
-        for circuit in circuits:
-            print(f"Circuit {circuit.id}:")
-            for path in circuit.path:
-                print(f"  - {path}")
-            print("------")
+    try:
+        with Controller.from_port(port=9051) as controller:
+            controller.authenticate()
+
+            # Request circuit information
+            circuits = controller.get_circuits()
+            for circuit in circuits:
+                print(f"Circuit {circuit.id}:")
+                # Loop through the paths if available
+                if hasattr(circuit, 'path'):
+                    for node in circuit.path:
+                        print(f"  - {node}")
+                print("------")
+    except Exception as e:
+        print(f"Error retrieving Tor circuit info: {e}")
 
 # Client logic to continuously send messages to the server through Tor
 def client_program():
@@ -35,30 +40,36 @@ def client_program():
     socket.socket = socks.socksocket  # Replaces the socket object to route through Tor
 
     # Now, create a socket and connect to the server (via Tor)
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((host, port))
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.connect((host, port))
 
-    # Receive the server's public key
-    public_key = client_socket.recv(2048)
+        # Receive the server's public key
+        public_key = client_socket.recv(2048)
+        print("Received public key from server.")
 
-    # Log current Tor circuit info
+        # Log current Tor circuit info
+        get_tor_circuit_info()  # Fetch Tor circuit info once after connection
 
-    while True: 
-        # Prompt the user to enter a message
-        message = input("Enter message to send (or 'exit' to quit): ")
+        while True: 
+            # Prompt the user to enter a message
+            message = input("Enter message to send (or 'exit' to quit): ")
 
-        if message.lower() == 'exit':
-            break
+            if message.lower() == 'exit':
+                break
 
-        # Encrypt the message using the server's public key
-        encrypted_message = encrypt_with_public_key(message, public_key)
+            # Encrypt the message using the server's public key
+            encrypted_message = encrypt_with_public_key(message, public_key)
 
-        # Send the encrypted message to the server
-        client_socket.send(encrypted_message)
+            # Send the encrypted message to the server
+            client_socket.send(encrypted_message)
 
-        get_tor_circuit_info()
+            # Optionally, fetch Tor circuit info again after each message
+            # get_tor_circuit_info()  # Uncomment if you need this
 
-    client_socket.close()
+        client_socket.close()
+    except Exception as e:
+        print(f"Error in client communication: {e}")
 
 if __name__ == "__main__":
     client_program()
